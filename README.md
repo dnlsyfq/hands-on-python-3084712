@@ -83,3 +83,101 @@ with open("laureates.csv", "r") as f:
 with open("laureates.json", "w") as f:     
     json.dump(laureates, f, indent=2) // write json from laureates data
 ```
+
+### Requests
+```
+import requests
+
+response = requests.get(
+    "http://api.worldbank.org/v2/countries/USA/indicators/SP.POP.TOTL?per_page=5000&format=json")
+
+last_twenty_years = response.json()[1][:20]
+
+for year in last_twenty_years:
+    display_width = year["value"] // 10_000_000
+    print(f'{year["date"]}: {year["value"]}',"="*display_width)
+    
+```
+
+### flask
+
+```
+from distutils.log import debug
+from flask import Flask
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def hello():
+    return "Hello, World"
+
+
+app.run(debug=True)
+
+```
+
+```
+import csv
+from flask import Flask, render_template, jsonify
+
+
+app = Flask(__name__)
+
+with open("laureates.csv", "r", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    laureates = list(reader)
+
+
+@app.route("/")
+def index():
+    # template found in templates/index.html
+    return render_template("index.html")
+
+
+@app.route("/laureates/")
+def laureate():
+    return jsonify(laureates)
+
+
+app.run(debug=True)
+
+```
+
+```
+import csv
+from flask import Flask, render_template, request, jsonify
+
+
+app = Flask(__name__)
+
+with open("laureates.csv", "r") as f:
+    reader = csv.DictReader(f)
+    laureates = list(reader)
+
+
+@app.route("/")
+def index():
+    # template found in templates/index.html
+    return render_template("index.html")
+
+
+@app.route("/laureates/")
+def laureate_list():
+    # template found in templates/laureate.html
+    results = []
+    if not request.args.get("surname"):
+        return jsonify(results)
+
+    search_string = request.args.get("surname").lower().strip()
+
+    for laureate in laureates:
+        if search_string in laureate["surname"].lower():
+            results.append(laureate)
+    # Your code here!
+    return jsonify(results)
+
+
+app.run(debug=True)
+
+```
